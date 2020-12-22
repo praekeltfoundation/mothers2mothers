@@ -6,15 +6,11 @@ Scripts that are used for the management of content for mothers2mothers
 - Download the google sheet as an Excel file and name it `who_content.xlsx`, and place it in the same folder as the python script.
 - Modify the `ImportInfo` sheet to only contain what you want in the output json file. It will create one file for each Country/Type combination
 - Run `pip install -r requirements.txt` to install the requirements of the python script
-- Run `python convert_to_json.py` to create the output JSON files
-- Do an export on one of the smaller lines, eg. the Zambia Team line, you can use a command similar to:
+- Add the token for the Zambia Team line to the local environment. This will be used to do an export, to get the current media information, eg.
 ```bash
-curl "https://whatsapp.turn.io/v1/export" \
-     -H "Authorization: Bearer xxx" \
-     -H "Accept: application/vnd.v1+json" \
-     > zambia.json
+export ZAMBIA_CLIENT_TOKEN=xxx
 ```
-- Search for `_welcome` and `_privacy` content blocks in the export, and copy the media information, and paste it in the appropriate places in the generated JSON from the convert_to_python.py output.
+- Run `python convert_to_json.py` to create the output JSON files
 - Upload the JSON to Turn, you can use a command similar to:
 ```bash
 curl -X POST "https://whatsapp.turn.io/v1/import" \

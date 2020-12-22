@@ -1,8 +1,32 @@
+
 from openpyxl import load_workbook
 import json
 import requests
+import os
 FILENAME = "who_content.xlsx"
 SHEETNAME = "ImportInfo"
+ZAMBIA_TOKEN = os.environ.get("ZAMBIA_CLIENT_TOKEN")
+
+
+def strip_language(keyword):
+    return keyword.split("_", 1)[-1]
+
+def get_media():
+    response = requests.get(
+        "https://whatsapp.turn.io/v1/export",
+        headers={
+            "Authorization": f"Bearer {ZAMBIA_TOKEN}",
+            "Accept": "application/vnd.v1+json"
+        }
+    )
+    response.raise_for_status()
+    media = {}
+    for content in response.json()["data"]:
+        if content["attachment_media_object"]:
+            media[strip_language(content["question"])] = content
+    return media
+
+media = get_media()
 
 wb = load_workbook(FILENAME)
 ws = wb[SHEETNAME]
@@ -189,13 +213,14 @@ for key, values in sheets.items():
                 automators.append(language_automation)
             content = replace_content_values(content, values)
             content = replace_content_languages(question, content, all_languages[country_name])
+            media_content = media.get(strip_language(question), {})
             number_data[number_desc].append(
                 {
                     "answer": content,
-                    "attachment_media_object": None,
-                    "attachment_media_type": None,
-                    "attachment_mime_type": None,
-                    "attachment_uri": None,
+                    "attachment_media_object": media_content.get("attachment_media_object"),
+                    "attachment_media_type": media_content.get("attachment_media_type"),
+                    "attachment_mime_type": media_content.get("attachment_mime_type"),
+                    "attachment_uri": media_content.get("attachment_uri"),
                     "automators": automators,
                     "is_deleted": False,
                     "language": language,
