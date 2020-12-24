@@ -84,7 +84,9 @@ def get_keywords(sheet):
         return automation.split(",")
 
     return {
-        get_content_title(row): get_keywords(row) for row in sheet.iter_rows(min_row=2)
+        get_content_title(row): get_keywords(row)
+        for row in sheet.iter_rows(min_row=2)
+        if get_cell(sheet, row, "content title").value
     }
 
 

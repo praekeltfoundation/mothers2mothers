@@ -213,11 +213,12 @@ class TestProcessSheet(TestCase):
         eng_ws = wb.active
         eng_ws.title = "English master"
         eng_ws["A1"] = "Content title"
-        eng_ws["A2"] = "eng_test"
+        # Row 2 is empty, to test empty row handling
+        eng_ws["A3"] = "eng_test"
         eng_ws["B1"] = "Automation"
-        eng_ws["B2"] = "test1,test2"
+        eng_ws["B3"] = "test1,test2"
         eng_ws["C1"] = "Language"
-        eng_ws["C2"] = "eng"
+        eng_ws["C3"] = "eng"
 
         ws = wb.create_sheet(title="Portugese")
         ws["A1"] = "Content title"
