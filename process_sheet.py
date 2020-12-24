@@ -1,3 +1,4 @@
+import re
 from functools import lru_cache
 
 import emoji
@@ -170,6 +171,25 @@ def clean_language(workbook):
                     language.value = lang
 
 
+def clean_content_title(workbook):
+    """
+    Goes through all the content sheets, and normalises the content title:
+    - Whitespace trimmed from start and finish
+    - Non word characters replace with `-`
+    """
+    for sheet in workbook:
+        if sheet.title.strip().lower() in (
+            "language codes",
+            "importinfo",
+        ):
+            continue
+
+        for row in sheet.iter_rows(min_row=2):
+            content_title = get_cell(sheet, row, "content title")
+            if content_title.value:
+                content_title.value = re.sub(r"\W+", "_", content_title.value.strip())
+
+
 def add_english_keywords(workbook):
     """
     Goes through all of the non-english sheets, and adds the english keywords
@@ -221,6 +241,7 @@ def check_content_length(workbook):
 if __name__ == "__main__":
     workbook = load_workbook(FILENAME)
     clean_language(workbook)
+    clean_content_title(workbook)
     clean_keywords(workbook)
     add_english_keywords(workbook)
     check_content_length(workbook)

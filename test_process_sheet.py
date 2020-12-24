@@ -8,6 +8,7 @@ from process_sheet import (
     add_english_keywords,
     base_emoji,
     check_content_length,
+    clean_content_title,
     clean_keywords,
     clean_language,
     get_cell,
@@ -282,3 +283,20 @@ class TestProcessSheet(TestCase):
         clean_language(wb)
 
         self.assertEqual(ws["C3"].value, "eng")
+
+    def test_clean_content_title(self):
+        """
+        Should do the following to content titles:
+        - Remove leading and trailing whitespace
+        - Replace non-word characters with _
+        """
+        wb = Workbook()
+        ws = wb.active
+        ws["A1"] = "Content title"
+        ws["A2"] = " leading and trailing whitespace "
+        ws["A3"] = "non-word - characters"
+
+        clean_content_title(wb)
+
+        self.assertEqual(ws["A2"].value, "leading_and_trailing_whitespace")
+        self.assertEqual(ws["A3"].value, "non_word_characters")
