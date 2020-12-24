@@ -75,9 +75,6 @@ def get_keywords(sheet):
     def get_content_title(row):
         content = get_cell(sheet, row, "content title").value or ""
         language = get_cell(sheet, row, "language").value
-        if not language:
-            # Default to first row language if language missing
-            language = get_cell(sheet, sheet[2], "language").value
         if content.startswith(language):
             return content[len(language) + 1 :]
         return content
@@ -148,6 +145,29 @@ def clean_keywords(workbook):
             get_cell(sheet, row, "automation").value = ",".join(keywords)
 
 
+def clean_language(workbook):
+    """
+    Goes through all the content sheets, and ensures that there's a language field
+    present. If not, fills in using the last value for the language
+    """
+    for sheet in workbook:
+        if sheet.title.strip().lower() in (
+            "language codes",
+            "importinfo",
+        ):
+            continue
+
+        lang = None
+        for row in sheet.iter_rows(min_row=2):
+            language = get_cell(sheet, row, "language")
+            content_title = get_cell(sheet, row, "content title")
+            if content_title.value:
+                if language.value:
+                    lang = language.value
+                else:
+                    language.value = lang
+
+
 def add_english_keywords(workbook):
     """
     Goes through all of the non-english sheets, and adds the english keywords
@@ -167,12 +187,8 @@ def add_english_keywords(workbook):
             language = get_cell(sheet, row, "language").value
             content_title = (get_cell(sheet, row, "content title").value or "").strip()
             # Skip empty row
-            if not keyword_cell.value and not language and not content_title:
+            if not content_title:
                 continue
-            if not language:
-                error(f"Missing language, row: {row[0].row}, sheet: {sheet.title}")
-                # Pull language from first row if missing for this row
-                language = get_cell(sheet, sheet[2], "language").value
             if content_title.startswith(language):
                 content_title = content_title[len(language) + 1 :]
             if content_title not in english_keywords:
@@ -202,6 +218,7 @@ def check_content_length(workbook):
 
 if __name__ == "__main__":
     workbook = load_workbook(FILENAME)
+    clean_language(workbook)
     clean_keywords(workbook)
     add_english_keywords(workbook)
     check_content_length(workbook)

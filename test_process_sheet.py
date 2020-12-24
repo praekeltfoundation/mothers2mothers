@@ -9,6 +9,7 @@ from process_sheet import (
     base_emoji,
     check_content_length,
     clean_keywords,
+    clean_language,
     get_cell,
     get_index,
     get_keywords,
@@ -75,7 +76,8 @@ class TestProcessSheet(TestCase):
         ws["A4"] = "mother"
         ws["C1"] = "Language"
         ws["C2"] = "eng"
-        # No language for rest of rows, should default to first row
+        ws["C3"] = "eng"
+        ws["C4"] = "eng"
         ws["E1"] = "Automation"
         ws["E2"] = "hi,hello"
         # No keywords for third row, test no keyword handling
@@ -233,44 +235,6 @@ class TestProcessSheet(TestCase):
         self.assertEqual(ws["B3"].value, "test2,test3,test1")
         self.assertEqual(output.getvalue(), "")
 
-    def test_add_english_keywords_missing_language(self):
-        """
-        Should log the error and use the language from the first row
-        """
-        wb = Workbook()
-        eng_ws = wb.active
-        eng_ws.title = "English master"
-        eng_ws["A1"] = "Content title"
-        eng_ws["A2"] = "eng_test1"
-        eng_ws["A3"] = "eng_test2"
-        eng_ws["B1"] = "Automation"
-        eng_ws["B2"] = "test1"
-        eng_ws["B3"] = "test3"
-        eng_ws["C1"] = "Language"
-        eng_ws["C2"] = "eng"
-        eng_ws["C3"] = "eng"
-
-        ws = wb.create_sheet(title="Portuguese")
-        ws["A1"] = "Content title"
-        ws["A2"] = "por_test1"
-        ws["A3"] = "por_test2"
-        ws["B1"] = "Automation"
-        ws["B2"] = "test2"
-        ws["B3"] = "test4"
-        ws["C1"] = "Language"
-        ws["C2"] = "por"
-        # No language for row 3
-
-        output = io.StringIO()
-        with redirect_stdout(output):
-            add_english_keywords(wb)
-
-        self.assertEqual(ws["B2"].value, "test2,test1")
-        self.assertEqual(ws["B3"].value, "test4,test3")
-        self.assertEqual(
-            output.getvalue(), "Missing language, row: 3, sheet: Portuguese\n"
-        )
-
     def test_add_english_keywords_content_title(self):
         """
         Should log the error and use row numbers to find english keyword
@@ -301,3 +265,19 @@ class TestProcessSheet(TestCase):
         self.assertEqual(
             output.getvalue(), "Missing english content not_test1, sheet: Portuguese\n"
         )
+
+    def test_clean_language(self):
+        """
+        Should fill in any blank language fields using the previous row's language value
+        """
+        wb = Workbook()
+        ws = wb.active
+        ws["A1"] = "Content title"
+        ws["A2"] = "eng_test1"
+        ws["A3"] = "eng_test2"
+        ws["C1"] = "Language"
+        ws["C2"] = "eng"
+
+        clean_language(wb)
+
+        self.assertEqual(ws["C3"].value, "eng")
