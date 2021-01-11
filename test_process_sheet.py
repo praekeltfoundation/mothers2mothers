@@ -6,6 +6,7 @@ from openpyxl import Workbook
 
 from process_sheet import (
     add_english_keywords,
+    add_missing_content,
     base_emoji,
     check_content_length,
     clean_content_title,
@@ -300,3 +301,37 @@ class TestProcessSheet(TestCase):
 
         self.assertEqual(ws["A2"].value, "leading_and_trailing_whitespace")
         self.assertEqual(ws["A3"].value, "non_word_characters")
+
+    def test_add_missing_content(self):
+        """
+        Should add english content where content is missing in other languages
+        """
+        wb = Workbook()
+        eng_ws = wb.active
+        eng_ws.title = "English master"
+        eng_ws["A1"] = "Content title"
+        # Row 2 is empty, to test empty row handling
+        eng_ws["A3"] = "eng_test"
+        eng_ws["B1"] = "Content"
+        eng_ws["B3"] = "English Content"
+        eng_ws["C1"] = "Language"
+        eng_ws["C3"] = "eng"
+
+        ws = wb.create_sheet(title="Portugese")
+        ws["A1"] = "Content title"
+        # Row 2 is empty, to test empty row handling
+        ws["A3"] = "por_test"
+        ws["A4"] = "existing"
+        ws["B1"] = "Content"
+        ws["B4"] = "portuguese content"
+        ws["C1"] = "Language"
+        ws["C3"] = "por"
+        ws["C4"] = "por"
+
+        output = io.StringIO()
+        with redirect_stdout(output):
+            add_missing_content(wb)
+
+        self.assertEqual(ws["B3"].value, "English Content")
+        self.assertEqual(ws["B4"].value, "portuguese content")
+        self.assertEqual(output.getvalue(), "")

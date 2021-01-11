@@ -91,6 +91,26 @@ def get_keywords(sheet):
     }
 
 
+def get_content(sheet):
+    """
+    Returns a dictionary of content name and content
+    """
+
+    def get_content_title(row):
+        content = get_cell(sheet, row, "content title").value or ""
+        language = get_cell(sheet, row, "language").value
+        if content.startswith(language):
+            return content[len(language) + 1 :]
+        return content
+
+    return {
+        get_content_title(row): get_cell(sheet, row, "content").value
+        for row in sheet.iter_rows(min_row=2)
+        if get_cell(sheet, row, "content title").value
+        and get_cell(sheet, row, "content").value
+    }
+
+
 def clean_keywords(workbook):
     """
     Goes through all of the content sheets, and cleans up the keywords, by:
@@ -238,6 +258,33 @@ def check_content_length(workbook):
                 )
 
 
+def add_missing_content(workbook):
+    """
+    If content for a specific language is missing, fill in using the English content
+    """
+    english_content = get_content(workbook["English master"])
+    for sheet in workbook:
+        if sheet.title.strip().lower() in (
+            "language codes",
+            "importinfo",
+            "english master",
+        ):
+            continue
+
+        for row in sheet.iter_rows(min_row=2):
+            content_cell = get_cell(sheet, row, "content")
+            content = (content_cell.value or "").strip()
+            content_title = (get_cell(sheet, row, "content title").value or "").strip()
+            language = get_cell(sheet, row, "language").value
+            # Skip empty rows
+            if not content_title:
+                continue
+            if content_title.startswith(language):
+                content_title = content_title[len(language) + 1 :]
+            if not content:
+                content_cell.value = english_content[content_title]
+
+
 if __name__ == "__main__":
     workbook = load_workbook(FILENAME)
     clean_language(workbook)
@@ -245,6 +292,7 @@ if __name__ == "__main__":
     clean_keywords(workbook)
     add_english_keywords(workbook)
     check_content_length(workbook)
+    add_missing_content(workbook)
     if is_error:
         raise Exception("There were errors, not saving")
     workbook.save(f"2{FILENAME}")
