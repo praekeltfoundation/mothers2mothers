@@ -5,7 +5,7 @@ import requests
 import os
 FILENAME = "who_content.xlsx"
 SHEETNAME = "ImportInfo"
-ZAMBIA_TOKEN = os.environ.get("ZAMBIA_CLIENT_TOKEN")
+ZAMBIA_TOKEN = os.environ.get("ZAMBIA_TEAM_TOKEN")
 
 
 def strip_language(keyword):
