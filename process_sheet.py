@@ -220,6 +220,7 @@ def add_english_keywords(workbook):
             "language codes",
             "importinfo",
             "english master",
+            "sepedi (sa)",
         ):
             continue
 
@@ -268,6 +269,7 @@ def add_missing_content(workbook):
             "language codes",
             "importinfo",
             "english master",
+            "sepedi (sa)",
         ):
             continue
 
